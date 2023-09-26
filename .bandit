@@ -1,0 +1,6 @@
+# SPDX-FileCopyrightText: Copyright © Idiap Research Institute <contact@idiap.ch>
+#
+# SPDX-License-Identifier: BSD-3-Clause
+
+assert_used:
+  skips: ['multiauthenticator/tests/test_*.py']
