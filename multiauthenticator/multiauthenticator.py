@@ -65,19 +65,13 @@ class MultiAuthenticator(Authenticator):
             url_scope_authenticator,
             authenticator_configuration,
         ) in self.authenticators:
-            configuration = self.trait_values()
-            # Remove this one as it will overwrite the value if the authenticator_klass
-            # makes it configurable and the default value is used (take a look at
-            # GoogleOAuthenticator for example).
-            configuration.pop("login_service")
 
             class WrapperAuthenticator(URLScopeMixin, authenticator_klass):
                 url_scope = url_scope_authenticator
 
             service_name = authenticator_configuration.pop("service_name", None)
-            configuration.update(authenticator_configuration)
 
-            authenticator = WrapperAuthenticator(**configuration)
+            authenticator = WrapperAuthenticator(**authenticator_configuration)
 
             if service_name:
                 authenticator.service_name = service_name

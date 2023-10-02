@@ -72,7 +72,6 @@ def test_different_authenticators():
                 authenticator.logout_url("http://example.com")
                 == "http://example.com/pam/logout"
             )
-
         else:
             raise ValueError(f"Unknown authenticator: {authenticator}")
 
@@ -150,3 +149,38 @@ def test_service_name():
 
     assert f"Sign in with {gitlab_service_name}" in custom_html
     assert f"Sign in with {google_service_name}" in custom_html
+
+
+def test_extra_configuration():
+    allowed_users = {"test_user1", "test_user2"}
+
+    authenticators = [
+        (
+            GitLabOAuthenticator,
+            "/gitlab",
+            {
+                "client_id": "xxxx",
+                "client_secret": "xxxx",
+                "oauth_callback_url": "http://example.com/hub/gitlab/oauth_callback",
+                "allowed_users": allowed_users,
+            },
+        ),
+        (
+            PAMAuthenticator,
+            "/pam",
+            {
+                "service_name": "PAM",
+                "allowed_users": allowed_users,
+                "not_existing": "boom",
+            },
+        ),
+    ]
+    MultiAuthenticator.authenticators = authenticators
+
+    multi_authenticator = MultiAuthenticator()
+
+    for authenticator in multi_authenticator._authenticators:
+        assert authenticator.allowed_users == allowed_users
+
+        if isinstance(authenticator, PAMAuthenticator):
+            assert not hasattr(authenticator, "not_existing")
