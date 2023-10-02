@@ -36,18 +36,18 @@ from traitlets import List
 class URLScopeMixin:
     """Mixin class that adds the"""
 
-    scope = ""
+    url_scope = ""
 
     def login_url(self, base_url):
-        return super().login_url(url_path_join(base_url, self.scope))
+        return super().login_url(url_path_join(base_url, self.url_scope))
 
     def logout_url(self, base_url):
-        return super().logout_url(url_path_join(base_url, self.scope))
+        return super().logout_url(url_path_join(base_url, self.url_scope))
 
     def get_handlers(self, app):
         handlers = super().get_handlers(app)
         return [
-            (url_path_join(self.scope, path), handler) for path, handler in handlers
+            (url_path_join(self.url_scope, path), handler) for path, handler in handlers
         ]
 
 
@@ -62,7 +62,7 @@ class MultiAuthenticator(Authenticator):
         self._authenticators = []
         for (
             authenticator_klass,
-            url_scope,
+            url_scope_authenticator,
             authenticator_configuration,
         ) in self.authenticators:
             configuration = self.trait_values()
@@ -72,7 +72,7 @@ class MultiAuthenticator(Authenticator):
             configuration.pop("login_service")
 
             class WrapperAuthenticator(URLScopeMixin, authenticator_klass):
-                scope = url_scope
+                url_scope = url_scope_authenticator
 
             service_name = authenticator_configuration.pop("service_name", None)
             configuration.update(authenticator_configuration)
