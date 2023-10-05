@@ -184,3 +184,54 @@ def test_extra_configuration():
 
         if isinstance(authenticator, PAMAuthenticator):
             assert not hasattr(authenticator, "not_existing")
+
+
+def test_username_prefix():
+    MultiAuthenticator.authenticators = [
+        (
+            GitLabOAuthenticator,
+            "/gitlab",
+            {
+                "client_id": "xxxx",
+                "client_secret": "xxxx",
+                "oauth_callback_url": "http://example.com/hub/gitlab/oauth_callback",
+            },
+        ),
+        (PAMAuthenticator, "/pam", {"service_name": "PAM"}),
+    ]
+
+    multi_authenticator = MultiAuthenticator()
+    assert len(multi_authenticator._authenticators) == 2
+    assert multi_authenticator._authenticators[0].username_prefix == "GitLab:"
+    assert multi_authenticator._authenticators[1].username_prefix == "PAM:"
+
+
+def test_username_prefix_checks():
+    MultiAuthenticator.authenticators = [
+        (PAMAuthenticator, "/pam", {"service_name": "PAM", "allowed_users": {"test"}}),
+        (
+            PAMAuthenticator,
+            "/pam",
+            {"service_name": "PAM2", "blocked_users": {"test2"}},
+        ),
+    ]
+
+    multi_authenticator = MultiAuthenticator()
+    assert len(multi_authenticator._authenticators) == 2
+    authenticator = multi_authenticator._authenticators[0]
+
+    assert authenticator.check_allowed("test") == False
+    assert authenticator.check_allowed("PAM:test") == True
+    assert (
+        authenticator.check_blocked_users("test") == False
+    )  # Even if no block list, it does not have the correct prefix
+    assert authenticator.check_blocked_users("PAM:test") == True
+
+    authenticator = multi_authenticator._authenticators[1]
+    print(authenticator.blocked_users)
+    assert authenticator.check_allowed("test2") == False
+    assert (
+        authenticator.check_allowed("PAM2:test2") == True
+    )  # Because allowed_users is empty
+    assert authenticator.check_blocked_users("test2") == False
+    assert authenticator.check_blocked_users("PAM2:test2") == False

@@ -78,28 +78,32 @@ class MultiAuthenticator(Authenticator):
                     if response is None:
                         return None
                     elif type(response) == str:
-                        return self.username_prefix+response
+                        return self.username_prefix + response
                     else:
-                        response['name'] = self.username_prefix+response['name']
+                        response["name"] = self.username_prefix + response["name"]
                         return response
 
-                # def normalize_username(self, username):
-                #     print("normalize username :",username, super().normalize_username(username))
-                #     return self.username_prefix+super().normalize_username(username)
-
                 def check_allowed(self, username, authentication=None):
-                    print("check allowed provided :",username)
-                    return super().check_allowed(username.removeprefix(self.username_prefix), authentication)
+                    if not username.startswith(self.username_prefix):
+                        return False
+
+                    return super().check_allowed(
+                        username.removeprefix(self.username_prefix), authentication
+                    )
 
                 def check_blocked_users(self, username, authentication=None):
-                    print("check blocked provided :",username)
-                    return super().check_allowed(username.removeprefix(self.username_prefix), authentication)
+                    if not username.startswith(self.username_prefix):
+                        return False
+
+                    return super().check_blocked_users(
+                        username.removeprefix(self.username_prefix), authentication
+                    )
 
             service_name = authenticator_configuration.pop("service_name", None)
 
             authenticator = WrapperAuthenticator(**authenticator_configuration)
 
-            if service_name:
+            if service_name is not None:
                 authenticator.service_name = service_name
 
             self._authenticators.append(authenticator)
