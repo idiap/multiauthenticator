@@ -51,6 +51,14 @@ class URLScopeMixin:
         ]
 
 
+def removeprefix(self: str, prefix: str) -> str:
+    """PEP-0616 implementation to stay compatible with Python < 3.9"""
+    if self.startswith(prefix):
+        return self[len(prefix) :]
+    else:
+        return self[:]
+
+
 class MultiAuthenticator(Authenticator):
     """Wrapper class that allows to use more than one authentication provider
     for JupyterHub"""
@@ -88,7 +96,7 @@ class MultiAuthenticator(Authenticator):
                         return False
 
                     return super().check_allowed(
-                        username.removeprefix(self.username_prefix), authentication
+                        removeprefix(username, self.username_prefix), authentication
                     )
 
                 def check_blocked_users(self, username, authentication=None):
@@ -96,7 +104,7 @@ class MultiAuthenticator(Authenticator):
                         return False
 
                     return super().check_blocked_users(
-                        username.removeprefix(self.username_prefix), authentication
+                        removeprefix(username, self.username_prefix), authentication
                     )
 
             service_name = authenticator_configuration.pop("service_name", None)
