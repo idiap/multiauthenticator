@@ -69,6 +69,10 @@ class MultiAuthenticator(Authenticator):
             class WrapperAuthenticator(URLScopeMixin, authenticator_klass):
                 url_scope = url_scope_authenticator
 
+                @property
+                def username_prefix(self):
+                    return f"{getattr(self, 'service_name', self.login_service)}:"
+
                 async def authenticate(self, handler, data=None, **kwargs):
                     response = await super().authenticate(handler, data, **kwargs)
                     if response is None:
