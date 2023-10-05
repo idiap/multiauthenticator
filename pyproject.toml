@@ -29,6 +29,7 @@ dependencies = [
 
 [project.optional-dependencies]
 test = ["pytest", "pytest-cov"]
+dev = ["pre-commit", "jupyterhub-multiauthenticator[test]"]
 
 [tool.setuptools]
 packages = ["multiauthenticator"]
