@@ -258,13 +258,14 @@ def test_username_prefix_validation():
             GitLabOAuthenticator,
             "/gitlab",
             {
-                "login_service": "test me:",
                 "client_id": "xxxx",
                 "client_secret": "xxxx",
                 "oauth_callback_url": "http://example.com/hub/gitlab/oauth_callback",
             },
         ),
     ]
+
+    GitLabOAuthenticator.login_service = "test me:"
 
     with pytest.raises(ValueError) as excinfo:
         MultiAuthenticator()
