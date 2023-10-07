@@ -114,11 +114,11 @@ class MultiAuthenticator(Authenticator):
             authenticator = WrapperAuthenticator(**authenticator_configuration)
 
             if service_name is not None:
-                if service_name.endswith(PREFIX_SEPARATOR):
-                    raise ValueError(f"Service name cannot end with {PREFIX_SEPARATOR}")
+                if PREFIX_SEPARATOR in service_name:
+                    raise ValueError(f"Service name cannot contain {PREFIX_SEPARATOR}")
                 authenticator.service_name = service_name
-            elif authenticator.login_service.endswith(PREFIX_SEPARATOR):
-                raise ValueError(f"Login service cannot end with {PREFIX_SEPARATOR}")
+            elif PREFIX_SEPARATOR in authenticator.login_service:
+                raise ValueError(f"Login service cannot contain {PREFIX_SEPARATOR}")
 
             self._authenticators.append(authenticator)
 

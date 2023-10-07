@@ -4,6 +4,7 @@
 """Test module for the MultiAuthenticator class"""
 import pytest
 
+from jupyterhub.auth import DummyAuthenticator
 from jupyterhub.auth import PAMAuthenticator
 from oauthenticator.github import GitHubOAuthenticator
 from oauthenticator.gitlab import GitLabOAuthenticator
@@ -205,8 +206,28 @@ def test_username_prefix():
 
     multi_authenticator = MultiAuthenticator()
     assert len(multi_authenticator._authenticators) == 2
-    assert multi_authenticator._authenticators[0].username_prefix == "GitLab:"
-    assert multi_authenticator._authenticators[1].username_prefix == "PAM:"
+    assert (
+        multi_authenticator._authenticators[0].username_prefix
+        == f"GitLab{PREFIX_SEPARATOR}"
+    )
+    assert (
+        multi_authenticator._authenticators[1].username_prefix
+        == f"PAM{PREFIX_SEPARATOR}"
+    )
+
+
+@pytest.mark.asyncio
+async def test_authenticated_username_prefix():
+    MultiAuthenticator.authenticators = [
+        (DummyAuthenticator, "/pam", {"service_name": "Dummy"}),
+    ]
+
+    multi_authenticator = MultiAuthenticator()
+    assert len(multi_authenticator._authenticators) == 1
+    username = await multi_authenticator._authenticators[0].authenticate(
+        None, {"username": "test"}
+    )
+    assert username == f"Dummy{PREFIX_SEPARATOR}test"
 
 
 def test_username_prefix_checks():
@@ -251,7 +272,7 @@ def test_username_prefix_validation():
     with pytest.raises(ValueError) as excinfo:
         MultiAuthenticator()
 
-    assert f"Service name cannot end with {PREFIX_SEPARATOR}" in str(excinfo.value)
+    assert f"Service name cannot contain {PREFIX_SEPARATOR}" in str(excinfo.value)
 
     MultiAuthenticator.authenticators = [
         (
@@ -270,4 +291,4 @@ def test_username_prefix_validation():
     with pytest.raises(ValueError) as excinfo:
         MultiAuthenticator()
 
-    assert f"Login service cannot end with {PREFIX_SEPARATOR}" in str(excinfo.value)
+    assert f"Login service cannot contain {PREFIX_SEPARATOR}" in str(excinfo.value)
