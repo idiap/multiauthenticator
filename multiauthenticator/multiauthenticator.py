@@ -32,6 +32,8 @@ from jupyterhub.auth import Authenticator
 from jupyterhub.utils import url_path_join
 from traitlets import List
 
+PREFIX_SEPARATOR = ":"
+
 
 class URLScopeMixin:
     """Mixin class that adds the"""
@@ -79,7 +81,7 @@ class MultiAuthenticator(Authenticator):
 
                 @property
                 def username_prefix(self):
-                    return f"{getattr(self, 'service_name', self.login_service)}:"
+                    return f"{getattr(self, 'service_name', self.login_service)}{PREFIX_SEPARATOR}"
 
                 async def authenticate(self, handler, data=None, **kwargs):
                     response = await super().authenticate(handler, data, **kwargs)
@@ -112,7 +114,11 @@ class MultiAuthenticator(Authenticator):
             authenticator = WrapperAuthenticator(**authenticator_configuration)
 
             if service_name is not None:
+                if service_name.endswith(PREFIX_SEPARATOR):
+                    raise ValueError(f"Service name cannot end with {PREFIX_SEPARATOR}")
                 authenticator.service_name = service_name
+            elif authenticator.login_service.endswith(PREFIX_SEPARATOR):
+                raise ValueError(f"Login service cannot end with {PREFIX_SEPARATOR}")
 
             self._authenticators.append(authenticator)
 
