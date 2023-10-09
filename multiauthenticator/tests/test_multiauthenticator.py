@@ -86,7 +86,7 @@ def test_same_authenticators():
             GoogleOAuthenticator,
             "/mygoogle",
             {
-                "login_service": "My Google",
+                "service_name": "My Google",
                 "client_id": "yyyyy",
                 "client_secret": "yyyyy",
                 "oauth_callback_url": "http://example.com/hub/mygoogle/oauth_callback",
@@ -96,7 +96,7 @@ def test_same_authenticators():
             GoogleOAuthenticator,
             "/othergoogle",
             {
-                "login_service": "Other Google",
+                "service_name": "Other Google",
                 "client_id": "xxxx",
                 "client_secret": "xxxx",
                 "oauth_callback_url": "http://example.com/hub/othergoogle/oauth_callback",
@@ -113,9 +113,9 @@ def test_same_authenticators():
     for path, handler in handlers:
         assert isinstance(handler.authenticator, GoogleOAuthenticator)
         if "mygoogle" in path:
-            assert handler.authenticator.login_service == "My Google"
+            assert handler.authenticator.service_name == "My Google"
         elif "othergoogle" in path:
-            assert handler.authenticator.login_service == "Other Google"
+            assert handler.authenticator.service_name == "Other Google"
         else:
             raise ValueError(f"Unknown path: {path}")
 
