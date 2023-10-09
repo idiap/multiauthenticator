@@ -6,6 +6,7 @@ import pytest
 
 from jupyterhub.auth import DummyAuthenticator
 from jupyterhub.auth import PAMAuthenticator
+from oauthenticator import OAuthenticator
 from oauthenticator.github import GitHubOAuthenticator
 from oauthenticator.gitlab import GitLabOAuthenticator
 from oauthenticator.google import GoogleOAuthenticator
@@ -256,12 +257,17 @@ def test_username_prefix_checks():
     assert authenticator.check_blocked_users("PAM2:test2") == False
 
 
-def test_username_prefix_validation():
+@pytest.fixture(params=[f"test me{PREFIX_SEPARATOR}", f"second{PREFIX_SEPARATOR} test"])
+def invalid_name(request):
+    yield request.param
+
+
+def test_username_prefix_validation_with_service_name(invalid_name):
     MultiAuthenticator.authenticators = [
         (
             PAMAuthenticator,
             "/pam",
-            {"service_name": f"PAM{PREFIX_SEPARATOR}", "allowed_users": {"test"}},
+            {"service_name": invalid_name, "allowed_users": {"test"}},
         ),
     ]
 
@@ -270,19 +276,22 @@ def test_username_prefix_validation():
 
     assert f"Service name cannot contain {PREFIX_SEPARATOR}" in str(excinfo.value)
 
+
+def test_username_prefix_validation_with_login_service(invalid_name):
+    class MyAuthenticator(OAuthenticator):
+        login_service = invalid_name
+
     MultiAuthenticator.authenticators = [
         (
-            GitLabOAuthenticator,
-            "/gitlab",
+            MyAuthenticator,
+            "/myauth",
             {
                 "client_id": "xxxx",
                 "client_secret": "xxxx",
-                "oauth_callback_url": "http://example.com/hub/gitlab/oauth_callback",
+                "oauth_callback_url": "http://example.com/myauth/oauth_callback",
             },
         ),
     ]
-
-    GitLabOAuthenticator.login_service = "test me:"
 
     with pytest.raises(ValueError) as excinfo:
         MultiAuthenticator()
