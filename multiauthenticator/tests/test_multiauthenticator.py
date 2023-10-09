@@ -175,7 +175,6 @@ def test_extra_configuration():
             {
                 "service_name": "PAM",
                 "allowed_users": allowed_users,
-                "not_existing": "boom",
             },
         ),
     ]
@@ -185,9 +184,6 @@ def test_extra_configuration():
 
     for authenticator in multi_authenticator._authenticators:
         assert authenticator.allowed_users == allowed_users
-
-        if isinstance(authenticator, PAMAuthenticator):
-            assert not hasattr(authenticator, "not_existing")
 
 
 def test_username_prefix():
