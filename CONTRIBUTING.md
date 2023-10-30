@@ -20,7 +20,7 @@ To set up a development environment for this repository:
 1. Do a development install with pip
 
    ```bash
-   pip install --editable ".[test]"
+   pip install --editable ".[dev]"
    ```
 
 1. Set up pre-commit hooks for automatic code formatting, etc.

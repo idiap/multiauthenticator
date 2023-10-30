@@ -32,6 +32,8 @@ from jupyterhub.auth import Authenticator
 from jupyterhub.utils import url_path_join
 from traitlets import List
 
+PREFIX_SEPARATOR = ":"
+
 
 class URLScopeMixin:
     """Mixin class that adds the"""
@@ -49,6 +51,14 @@ class URLScopeMixin:
         return [
             (url_path_join(self.url_scope, path), handler) for path, handler in handlers
         ]
+
+
+def removeprefix(self: str, prefix: str) -> str:
+    """PEP-0616 implementation to stay compatible with Python < 3.9"""
+    if self.startswith(prefix):
+        return self[len(prefix) :]
+    else:
+        return self[:]
 
 
 class MultiAuthenticator(Authenticator):
@@ -69,12 +79,46 @@ class MultiAuthenticator(Authenticator):
             class WrapperAuthenticator(URLScopeMixin, authenticator_klass):
                 url_scope = url_scope_authenticator
 
+                @property
+                def username_prefix(self):
+                    return f"{getattr(self, 'service_name', self.login_service)}{PREFIX_SEPARATOR}"
+
+                async def authenticate(self, handler, data=None, **kwargs):
+                    response = await super().authenticate(handler, data, **kwargs)
+                    if response is None:
+                        return None
+                    elif type(response) == str:
+                        return self.username_prefix + response
+                    else:
+                        response["name"] = self.username_prefix + response["name"]
+                        return response
+
+                def check_allowed(self, username, authentication=None):
+                    if not username.startswith(self.username_prefix):
+                        return False
+
+                    return super().check_allowed(
+                        removeprefix(username, self.username_prefix), authentication
+                    )
+
+                def check_blocked_users(self, username, authentication=None):
+                    if not username.startswith(self.username_prefix):
+                        return False
+
+                    return super().check_blocked_users(
+                        removeprefix(username, self.username_prefix), authentication
+                    )
+
             service_name = authenticator_configuration.pop("service_name", None)
 
             authenticator = WrapperAuthenticator(**authenticator_configuration)
 
-            if service_name:
+            if service_name is not None:
+                if PREFIX_SEPARATOR in service_name:
+                    raise ValueError(f"Service name cannot contain {PREFIX_SEPARATOR}")
                 authenticator.service_name = service_name
+            elif PREFIX_SEPARATOR in authenticator.login_service:
+                raise ValueError(f"Login service cannot contain {PREFIX_SEPARATOR}")
 
             self._authenticators.append(authenticator)
 
