@@ -6,7 +6,11 @@
 
 name: Publish Python 🐍 distribution 📦 to PyPI and TestPyPI
 
-on: push
+on:
+  workflow_run:
+    workflows: ["Tests"]
+    types:
+      - completed
 
 jobs:
   build:
