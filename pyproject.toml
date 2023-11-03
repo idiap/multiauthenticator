@@ -96,7 +96,7 @@ show_missing = true
 # ref: https://github.com/your-tools/tbump#readme
 #
 [tool.tbump]
-github_url = "https://github.com/jupyterhub/systemdspawner"
+github_url = "https://github.com/idiap/multiauthenticator"
 
 [tool.tbump.version]
 current = "0.1.0.dev"
@@ -116,7 +116,7 @@ message_template = "Bump to {new_version}"
 tag_template = "{new_version}"
 
 [[tool.tbump.file]]
-src = "setup.py"
+src = "pyproject.toml"
 
 [[tool.tbump.file]]
 src = "multiauthenticator/__init__.py"
