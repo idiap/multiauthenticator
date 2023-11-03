@@ -8,7 +8,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "jupyterhub-multiauthenticator"
-version = "0.1.0"
+version = "0.1.1.dev"
 authors = [{name = "Samuel Gaist", email = "samuel.gaist@idiap.ch"}]
 description = "Authenticator multiplexer for JupyterHub"
 readme = "README.md"
@@ -99,7 +99,7 @@ show_missing = true
 github_url = "https://github.com/idiap/multiauthenticator"
 
 [tool.tbump.version]
-current = "0.1.0"
+current = "0.1.1.dev"
 regex = '''
     (?P<major>\d+)
     \.
