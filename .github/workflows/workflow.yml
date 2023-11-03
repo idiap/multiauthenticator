@@ -2,21 +2,69 @@
 #
 # SPDX-License-Identifier: BSD-3-Clause
 
-# based on https://packaging.python.org/en/latest/guides/publishing-package-distribution-releases-using-github-actions-ci-cd-workflows/
-
-name: Publish Python 🐍 distribution 📦 to PyPI
+# This is a GitHub workflow defining a set of jobs with a set of steps.
+# ref: https://docs.github.com/en/free-pro-team@latest/actions/reference/workflow-syntax-for-github-actions
+#
+name: Workflow
 
 on:
-  workflow_run:
-    workflows: ["Tests"]
-    types:
-      - completed
+  pull_request:
+    paths-ignore:
+      - "**.md"
+      - ".github/workflows/*.yaml"
+      - "!.github/workflows/test.yaml"
+  push:
+    paths-ignore:
+      - "**.md"
+      - ".github/workflows/*.yaml"
+      - "!.github/workflows/test.yaml"
+    branches-ignore:
+      - "dependabot/**"
+      - "pre-commit-ci-update-config"
+    tags: ["[0-9]+.[0-9]+.[0-9]+"]
+  workflow_dispatch:
 
 jobs:
+  test:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 10
+
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version:
+          - "3.7"
+          - "3.8"
+          - "3.9"
+          - "3.10"
+          - "3.11"
+
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v4
+        with:
+          python-version: "${{ matrix.python-version }}"
+
+      - name: Install Python dependencies
+        run: |
+          pip install --upgrade pip
+          pip install -e ".[test]"
+
+      - name: List packages
+        run: pip freeze
+
+      - name: Run tests
+        run: |
+          pytest --cov=multiauthenticator
+
+      # GitHub action reference: https://github.com/codecov/codecov-action
+      - uses: codecov/codecov-action@v3
+
   build:
     name: Build distribution 📦
 
-    if: ${{ github.event.workflow_run.conclusion == 'success' }}
+    needs:
+      - test
 
     runs-on: ubuntu-latest
 
