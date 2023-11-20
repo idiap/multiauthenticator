@@ -137,7 +137,7 @@ class MultiAuthenticator(Authenticator):
             html.append(
                 f"""
                 <div class="service-login">
-                  <a role="button" class='btn btn-jupyter btn-lg' href='{url}'>
+                  <a role="button" class='btn btn-jupyter btn-lg' href='{url}{{% if next is defined %}}?next={{{{next}}}}{{% endif %}}'>
                     Sign in with {login_service}
                   </a>
                 </div>
