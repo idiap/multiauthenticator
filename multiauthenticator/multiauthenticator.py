@@ -123,7 +123,11 @@ class MultiAuthenticator(Authenticator):
             self._authenticators.append(authenticator)
 
     def get_custom_html(self, base_url):
-        """Re-implementation generating one login button per configured authenticator"""
+        """Re-implementation generating one login button per configured authenticator
+
+        Note: the html generated in this method will be passed through Jinja's template
+        rendering, see the login implementation in JupyterHub's sources.
+        """
 
         html = []
         for authenticator in self._authenticators:
