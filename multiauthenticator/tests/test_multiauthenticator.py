@@ -4,6 +4,7 @@
 """Test module for the MultiAuthenticator class"""
 import pytest
 
+from jinja2 import Template
 from jupyterhub.auth import DummyAuthenticator
 from jupyterhub.auth import PAMAuthenticator
 from oauthenticator import OAuthenticator
@@ -297,3 +298,27 @@ def test_username_prefix_validation_with_login_service(invalid_name):
         MultiAuthenticator()
 
     assert f"Login service cannot contain {PREFIX_SEPARATOR}" in str(excinfo.value)
+
+
+def test_next_handling():
+    MultiAuthenticator.authenticators = [
+        (
+            PAMAuthenticator,
+            "/pam",
+            {"service_name": "test-service", "allowed_users": {"test"}},
+        ),
+    ]
+
+    multi_authenticator = MultiAuthenticator()
+    html = multi_authenticator.get_custom_html("")
+
+    template = Template(html)
+
+    with_next = template.render({"next": "/next-destination"})
+    assert "href='pam/login?next=/next-destination'" in with_next
+
+    without_next = template.render()
+    assert "href='pam/login'" in without_next
+
+    with_empty_next = template.render({"next": ""})
+    assert "href='pam/login'" in with_empty_next
