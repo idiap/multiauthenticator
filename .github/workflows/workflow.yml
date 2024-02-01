@@ -58,7 +58,7 @@ jobs:
           pytest --cov=multiauthenticator
 
       # GitHub action reference: https://github.com/codecov/codecov-action
-      - uses: codecov/codecov-action@v3
+      - uses: codecov/codecov-action@v4
 
   build:
     name: Build distribution 📦
