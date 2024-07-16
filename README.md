@@ -4,7 +4,7 @@ Copyright © Idiap Research Institute <contact@idiap.ch>
 SPDX-License-Identifier: BSD-3-Clause
 -->
 
-# OAuthAuthenticator + LDAP Autenticator ++... = MultiAuthenticator :heart:
+# JupyterHub OAuthenticator + LDAPAuthenticator ++... = MultiAuthenticator ❤️
 
 The MultiAuthenticator is multiplexer authenticator class that allows to use
 more than one authentication option with JupyterHub.
