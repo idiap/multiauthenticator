@@ -112,7 +112,9 @@ class MultiAuthenticator(Authenticator):
 
             service_name = authenticator_configuration.pop("service_name", None)
 
-            authenticator = WrapperAuthenticator(**authenticator_configuration)
+            authenticator = WrapperAuthenticator(
+                parent=self, **authenticator_configuration
+            )
 
             if service_name is not None:
                 if PREFIX_SEPARATOR in service_name:
