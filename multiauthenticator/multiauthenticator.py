@@ -31,6 +31,7 @@ The same Authenticator class can be used several to support different providers.
 from jupyterhub.auth import Authenticator
 from jupyterhub.utils import url_path_join
 from traitlets import List
+from traitlets import Unicode
 
 PREFIX_SEPARATOR = ":"
 
@@ -66,6 +67,12 @@ class MultiAuthenticator(Authenticator):
     for JupyterHub"""
 
     authenticators = List(help="The subauthenticators to use", config=True)
+    username_prefix = Unicode(
+        help="Prefix to prepend to username",
+        config=True,
+        allow_none=True,
+        default_value=None,
+    )
 
     def __init__(self, *arg, **kwargs):
         super().__init__(*arg, **kwargs)
@@ -81,7 +88,9 @@ class MultiAuthenticator(Authenticator):
 
                 @property
                 def username_prefix(self):
-                    prefix = f"{getattr(self, 'service_name', self.login_service)}{PREFIX_SEPARATOR}"
+                    prefix = getattr(self, "prefix", None)
+                    if prefix is None:
+                        prefix = f"{getattr(self, 'service_name', self.login_service)}{PREFIX_SEPARATOR}"
                     return self.normalize_username(prefix)
 
                 async def authenticate(self, handler, data=None, **kwargs):
@@ -116,7 +125,9 @@ class MultiAuthenticator(Authenticator):
                 parent=self, **authenticator_configuration
             )
 
-            if service_name is not None:
+            if self.username_prefix is not None:
+                authenticator.prefix = self.username_prefix
+            elif service_name is not None:
                 self.log.warning(
                     "service_name is deprecated, please create a subclass and set the login_service class variable"
                 )

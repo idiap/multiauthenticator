@@ -292,3 +292,21 @@ def test_next_handling():
 
     with_empty_next = template.render({"next": ""})
     assert "href='dummy/login'" in with_empty_next
+
+
+@pytest.mark.parametrize(
+    "prefix,expected", [(None, "DUMMY:TEST"), ("", "TEST"), ("prefix", "PREFIXTEST")]
+)
+@pytest.mark.asyncio
+async def test_prefix(prefix, expected):
+    MultiAuthenticator.username_prefix = prefix
+    MultiAuthenticator.authenticators = [
+        (CustomDummyAuthenticator, "/dummy", {}),
+    ]
+
+    multi_authenticator = MultiAuthenticator()
+    assert len(multi_authenticator._authenticators) == 1
+    user = await multi_authenticator._authenticators[0].get_authenticated_user(
+        None, {"username": "test"}
+    )
+    assert user["name"] == expected
