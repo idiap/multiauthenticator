@@ -2,6 +2,7 @@
 #
 # SPDX-License-Identifier: BSD-3-Clause
 """Test module for the MultiAuthenticator class"""
+import jupyterhub
 import pytest
 
 from jinja2 import Template
@@ -11,6 +12,7 @@ from oauthenticator import OAuthenticator
 from oauthenticator.github import GitHubOAuthenticator
 from oauthenticator.gitlab import GitLabOAuthenticator
 from oauthenticator.google import GoogleOAuthenticator
+from packaging.version import Version
 
 from ..multiauthenticator import PREFIX_SEPARATOR
 from ..multiauthenticator import MultiAuthenticator
@@ -275,9 +277,12 @@ def test_username_prefix_checks():
 
     authenticator = multi_authenticator._authenticators[1]
     assert authenticator.check_allowed("test2") == False
-    assert (
-        authenticator.check_allowed("pam2:test2") == True
-    )  # Because allowed_users is empty
+    if Version(jupyterhub.__version__) < Version("5"):
+        assert (
+            authenticator.check_allowed("pam2:test2") == True
+        )  # Because allowed_users is empty
+    else:
+        assert authenticator.check_allowed("pam2:test2") == False
     assert (
         authenticator.check_blocked_users("test2") == False
     )  # Because of missing prefix
