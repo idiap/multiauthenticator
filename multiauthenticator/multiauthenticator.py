@@ -81,7 +81,8 @@ class MultiAuthenticator(Authenticator):
 
                 @property
                 def username_prefix(self):
-                    return f"{getattr(self, 'service_name', self.login_service)}{PREFIX_SEPARATOR}"
+                    prefix = f"{getattr(self, 'service_name', self.login_service)}{PREFIX_SEPARATOR}"
+                    return self.normalize_username(prefix)
 
                 async def authenticate(self, handler, data=None, **kwargs):
                     response = await super().authenticate(handler, data, **kwargs)

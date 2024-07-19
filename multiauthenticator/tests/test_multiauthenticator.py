@@ -16,6 +16,11 @@ from ..multiauthenticator import PREFIX_SEPARATOR
 from ..multiauthenticator import MultiAuthenticator
 
 
+class CustomDummyAuthenticator(DummyAuthenticator):
+    def normalize_username(self, username):
+        return username.upper()
+
+
 def test_different_authenticators():
     MultiAuthenticator.authenticators = [
         (
@@ -200,32 +205,37 @@ def test_username_prefix():
             },
         ),
         (PAMAuthenticator, "/pam", {"service_name": "PAM"}),
+        (CustomDummyAuthenticator, "/dummy", {"service_name": "Dummy"}),
     ]
 
     multi_authenticator = MultiAuthenticator()
-    assert len(multi_authenticator._authenticators) == 2
+    assert len(multi_authenticator._authenticators) == 3
     assert (
         multi_authenticator._authenticators[0].username_prefix
-        == f"GitLab{PREFIX_SEPARATOR}"
+        == f"gitlab{PREFIX_SEPARATOR}"
     )
     assert (
         multi_authenticator._authenticators[1].username_prefix
-        == f"PAM{PREFIX_SEPARATOR}"
+        == f"pam{PREFIX_SEPARATOR}"
+    )
+    assert (
+        multi_authenticator._authenticators[2].username_prefix
+        == f"DUMMY{PREFIX_SEPARATOR}"
     )
 
 
 @pytest.mark.asyncio
 async def test_authenticated_username_prefix():
     MultiAuthenticator.authenticators = [
-        (DummyAuthenticator, "/pam", {"service_name": "Dummy"}),
+        (CustomDummyAuthenticator, "/dummy", {"service_name": "Dummy"}),
     ]
 
     multi_authenticator = MultiAuthenticator()
     assert len(multi_authenticator._authenticators) == 1
-    username = await multi_authenticator._authenticators[0].authenticate(
+    user = await multi_authenticator._authenticators[0].get_authenticated_user(
         None, {"username": "test"}
     )
-    assert username == f"Dummy{PREFIX_SEPARATOR}test"
+    assert user["name"] == f"DUMMY{PREFIX_SEPARATOR}TEST"
 
 
 def test_username_prefix_checks():
@@ -233,29 +243,70 @@ def test_username_prefix_checks():
         (PAMAuthenticator, "/pam", {"service_name": "PAM", "allowed_users": {"test"}}),
         (
             PAMAuthenticator,
-            "/pam",
+            "/pam2",
             {"service_name": "PAM2", "blocked_users": {"test2"}},
+        ),
+        (
+            CustomDummyAuthenticator,
+            "/dummy",
+            {"service_name": "Dummy", "allowed_users": {"TEST3"}},
+        ),
+        (
+            CustomDummyAuthenticator,
+            "/dummy2",
+            {
+                "service_name": "Dummy",
+                "allowed_users": {"TEST3"},
+                "blocked_users": {"TEST4"},
+            },
         ),
     ]
 
     multi_authenticator = MultiAuthenticator()
-    assert len(multi_authenticator._authenticators) == 2
+    assert len(multi_authenticator._authenticators) == 4
     authenticator = multi_authenticator._authenticators[0]
 
     assert authenticator.check_allowed("test") == False
-    assert authenticator.check_allowed("PAM:test") == True
+    assert authenticator.check_allowed("pam:test") == True
     assert (
         authenticator.check_blocked_users("test") == False
     )  # Even if no block list, it does not have the correct prefix
-    assert authenticator.check_blocked_users("PAM:test") == True
+    assert authenticator.check_blocked_users("pam:test") == True
 
     authenticator = multi_authenticator._authenticators[1]
     assert authenticator.check_allowed("test2") == False
     assert (
-        authenticator.check_allowed("PAM2:test2") == True
+        authenticator.check_allowed("pam2:test2") == True
     )  # Because allowed_users is empty
-    assert authenticator.check_blocked_users("test2") == False
-    assert authenticator.check_blocked_users("PAM2:test2") == False
+    assert (
+        authenticator.check_blocked_users("test2") == False
+    )  # Because of missing prefix
+    assert (
+        authenticator.check_blocked_users("pam2:test2") == False
+    )  # Because user is in blocked list
+
+    authenticator = multi_authenticator._authenticators[2]
+    assert authenticator.check_allowed("TEST3") == False
+    assert authenticator.check_allowed("DUMMY:TEST3") == True
+    assert (
+        authenticator.check_blocked_users("TEST3") == False
+    )  # Because of missing prefix
+    assert (
+        authenticator.check_blocked_users("DUMMY:TEST3") == True
+    )  # Because blocked_users is empty thus allowed
+
+    authenticator = multi_authenticator._authenticators[3]
+    assert authenticator.check_allowed("TEST3") == False
+    assert authenticator.check_allowed("DUMMY:TEST3") == True
+    assert (
+        authenticator.check_blocked_users("TEST3") == False
+    )  # Because of missing prefix
+    assert (
+        authenticator.check_blocked_users("DUMMY:TEST3") == True
+    )  # Because user is not in blocked list
+    assert (
+        authenticator.check_blocked_users("DUMMY:TEST4") == False
+    )  # Because user is in blocked list
 
 
 @pytest.fixture(params=[f"test me{PREFIX_SEPARATOR}", f"second{PREFIX_SEPARATOR} test"])
