@@ -33,11 +33,14 @@ jobs:
       fail-fast: false
       matrix:
         python-version:
-          - "3.7"
           - "3.8"
           - "3.9"
           - "3.10"
           - "3.11"
+        jupyterhub-version:
+          - "3"
+          - "4"
+          - "5"
 
     steps:
       - uses: actions/checkout@v4
@@ -48,6 +51,7 @@ jobs:
       - name: Install Python dependencies
         run: |
           pip install --upgrade pip
+          pip install jupyterhub==${{ matrix.jupyterhub-version }}
           pip install -e ".[test]"
 
       - name: List packages
