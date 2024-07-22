@@ -11,7 +11,6 @@ from jupyterhub.auth import PAMAuthenticator
 from oauthenticator import OAuthenticator
 from oauthenticator.github import GitHubOAuthenticator
 from oauthenticator.gitlab import GitLabOAuthenticator
-from oauthenticator.google import GoogleOAuthenticator
 from packaging.version import Version
 
 from ..multiauthenticator import PREFIX_SEPARATOR
@@ -19,8 +18,14 @@ from ..multiauthenticator import MultiAuthenticator
 
 
 class CustomDummyAuthenticator(DummyAuthenticator):
+    login_service = "Dummy"
+
     def normalize_username(self, username):
         return username.upper()
+
+
+class CustomPAMAuthenticator(PAMAuthenticator):
+    login_service = "PAM"
 
 
 def test_different_authenticators():
@@ -43,7 +48,7 @@ def test_different_authenticators():
                 "oauth_callback_url": "http://example.com/hub/github/oauth_callback",
             },
         ),
-        (PAMAuthenticator, "/pam", {"service_name": "PAM"}),
+        (CustomPAMAuthenticator, "/pam", {}),
     ]
 
     multi_authenticator = MultiAuthenticator()
@@ -89,81 +94,6 @@ def test_different_authenticators():
             raise ValueError(f"Unknown authenticator: {authenticator}")
 
 
-def test_same_authenticators():
-    MultiAuthenticator.authenticators = [
-        (
-            GoogleOAuthenticator,
-            "/mygoogle",
-            {
-                "service_name": "My Google",
-                "client_id": "yyyyy",
-                "client_secret": "yyyyy",
-                "oauth_callback_url": "http://example.com/hub/mygoogle/oauth_callback",
-            },
-        ),
-        (
-            GoogleOAuthenticator,
-            "/othergoogle",
-            {
-                "service_name": "Other Google",
-                "client_id": "xxxx",
-                "client_secret": "xxxx",
-                "oauth_callback_url": "http://example.com/hub/othergoogle/oauth_callback",
-            },
-        ),
-    ]
-
-    multi_authenticator = MultiAuthenticator()
-    assert len(multi_authenticator._authenticators) == 2
-    assert multi_authenticator.get_custom_html("").count("\n") == 13
-
-    handlers = multi_authenticator.get_handlers("")
-    assert len(handlers) == 6
-    for path, handler in handlers:
-        assert isinstance(handler.authenticator, GoogleOAuthenticator)
-        if "mygoogle" in path:
-            assert handler.authenticator.service_name == "My Google"
-        elif "othergoogle" in path:
-            assert handler.authenticator.service_name == "Other Google"
-        else:
-            raise ValueError(f"Unknown path: {path}")
-
-
-def test_service_name():
-    gitlab_service_name = "gitlab-service"
-    google_service_name = "google-service"
-    authenticators = [
-        (
-            GitLabOAuthenticator,
-            "/gitlab",
-            {
-                "service_name": gitlab_service_name,
-                "client_id": "xxxx",
-                "client_secret": "xxxx",
-                "oauth_callback_url": "http://example.com/hub/gitlab/oauth_callback",
-            },
-        ),
-        (
-            GoogleOAuthenticator,
-            "/google",
-            {
-                "service_name": google_service_name,
-                "client_id": "xxxx",
-                "client_secret": "xxxx",
-                "oauth_callback_url": "http://example.com/hub/othergoogle/oauth_callback",
-            },
-        ),
-    ]
-    MultiAuthenticator.authenticators = authenticators
-
-    multi_authenticator = MultiAuthenticator()
-
-    custom_html = multi_authenticator.get_custom_html("http://example.com")
-
-    assert f"Sign in with {gitlab_service_name}" in custom_html
-    assert f"Sign in with {google_service_name}" in custom_html
-
-
 def test_extra_configuration():
     allowed_users = {"test_user1", "test_user2"}
 
@@ -179,10 +109,9 @@ def test_extra_configuration():
             },
         ),
         (
-            PAMAuthenticator,
+            CustomDummyAuthenticator,
             "/pam",
             {
-                "service_name": "PAM",
                 "allowed_users": allowed_users,
             },
         ),
@@ -206,8 +135,8 @@ def test_username_prefix():
                 "oauth_callback_url": "http://example.com/hub/gitlab/oauth_callback",
             },
         ),
-        (PAMAuthenticator, "/pam", {"service_name": "PAM"}),
-        (CustomDummyAuthenticator, "/dummy", {"service_name": "Dummy"}),
+        (CustomPAMAuthenticator, "/pam", {}),
+        (CustomDummyAuthenticator, "/dummy", {}),
     ]
 
     multi_authenticator = MultiAuthenticator()
@@ -229,7 +158,7 @@ def test_username_prefix():
 @pytest.mark.asyncio
 async def test_authenticated_username_prefix():
     MultiAuthenticator.authenticators = [
-        (CustomDummyAuthenticator, "/dummy", {"service_name": "Dummy"}),
+        (CustomDummyAuthenticator, "/dummy", {}),
     ]
 
     multi_authenticator = MultiAuthenticator()
@@ -241,23 +170,28 @@ async def test_authenticated_username_prefix():
 
 
 def test_username_prefix_checks():
+    class CustomPAMAuthenticator2(PAMAuthenticator):
+        login_service = "PAM2"
+
+    class CustomDummyAuthenticator2(CustomDummyAuthenticator):
+        login_service = "Dummy2"
+
     MultiAuthenticator.authenticators = [
-        (PAMAuthenticator, "/pam", {"service_name": "PAM", "allowed_users": {"test"}}),
+        (CustomPAMAuthenticator, "/pam", {"allowed_users": {"test"}}),
         (
-            PAMAuthenticator,
+            CustomPAMAuthenticator2,
             "/pam2",
-            {"service_name": "PAM2", "blocked_users": {"test2"}},
+            {"blocked_users": {"test2"}},
         ),
         (
             CustomDummyAuthenticator,
             "/dummy",
-            {"service_name": "Dummy", "allowed_users": {"TEST3"}},
+            {"allowed_users": {"TEST3"}},
         ),
         (
-            CustomDummyAuthenticator,
+            CustomDummyAuthenticator2,
             "/dummy2",
             {
-                "service_name": "Dummy",
                 "allowed_users": {"TEST3"},
                 "blocked_users": {"TEST4"},
             },
@@ -302,36 +236,16 @@ def test_username_prefix_checks():
 
     authenticator = multi_authenticator._authenticators[3]
     assert authenticator.check_allowed("TEST3") == False
-    assert authenticator.check_allowed("DUMMY:TEST3") == True
+    assert authenticator.check_allowed("DUMMY2:TEST3") == True
     assert (
         authenticator.check_blocked_users("TEST3") == False
     )  # Because of missing prefix
     assert (
-        authenticator.check_blocked_users("DUMMY:TEST3") == True
+        authenticator.check_blocked_users("DUMMY2:TEST3") == True
     )  # Because user is not in blocked list
     assert (
-        authenticator.check_blocked_users("DUMMY:TEST4") == False
+        authenticator.check_blocked_users("DUMMY2:TEST4") == False
     )  # Because user is in blocked list
-
-
-@pytest.fixture(params=[f"test me{PREFIX_SEPARATOR}", f"second{PREFIX_SEPARATOR} test"])
-def invalid_name(request):
-    yield request.param
-
-
-def test_username_prefix_validation_with_service_name(invalid_name):
-    MultiAuthenticator.authenticators = [
-        (
-            PAMAuthenticator,
-            "/pam",
-            {"service_name": invalid_name, "allowed_users": {"test"}},
-        ),
-    ]
-
-    with pytest.raises(ValueError) as excinfo:
-        MultiAuthenticator()
-
-    assert f"Service name cannot contain {PREFIX_SEPARATOR}" in str(excinfo.value)
 
 
 def test_username_prefix_validation_with_login_service(invalid_name):
@@ -359,9 +273,9 @@ def test_username_prefix_validation_with_login_service(invalid_name):
 def test_next_handling():
     MultiAuthenticator.authenticators = [
         (
-            PAMAuthenticator,
-            "/pam",
-            {"service_name": "test-service", "allowed_users": {"test"}},
+            CustomDummyAuthenticator,
+            "/dummy",
+            {"allowed_users": {"test"}},
         ),
     ]
 
@@ -371,10 +285,28 @@ def test_next_handling():
     template = Template(html)
 
     with_next = template.render({"next": "/next-destination"})
-    assert "href='pam/login?next=/next-destination'" in with_next
+    assert "href='dummy/login?next=/next-destination'" in with_next
 
     without_next = template.render()
-    assert "href='pam/login'" in without_next
+    assert "href='dummy/login'" in without_next
 
     with_empty_next = template.render({"next": ""})
-    assert "href='pam/login'" in with_empty_next
+    assert "href='dummy/login'" in with_empty_next
+
+
+@pytest.mark.parametrize(
+    "prefix,expected", [(None, "DUMMY:TEST"), ("", "TEST"), ("prefix", "PREFIXTEST")]
+)
+@pytest.mark.asyncio
+async def test_prefix(prefix, expected):
+    MultiAuthenticator.username_prefix = prefix
+    MultiAuthenticator.authenticators = [
+        (CustomDummyAuthenticator, "/dummy", {}),
+    ]
+
+    multi_authenticator = MultiAuthenticator()
+    assert len(multi_authenticator._authenticators) == 1
+    user = await multi_authenticator._authenticators[0].get_authenticated_user(
+        None, {"username": "test"}
+    )
+    assert user["name"] == expected

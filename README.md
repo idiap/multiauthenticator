@@ -13,6 +13,7 @@ more than one authentication option with JupyterHub.
 
 ```
 $ pip install git+https://github.com/idiap/multiauthenticator
+$ pip install jupyter-multiauthenticator
 ```
 
 ## Configuration
@@ -33,6 +34,9 @@ from oauthenticator.google import GoogleOAuthenticator
 from oauthenticator.gitlab import GitLabOAuthenticator
 from jupyterhub.auth import PAMAuthenticator
 
+class MyPamAutenticator(PAMAuthenticator):
+    login_service = "PAM"
+
 c.MultiAuthenticator.authenticators = [
     (GitHubOAuthenticator, '/github', {
         'client_id': 'XXXX',
@@ -50,7 +54,7 @@ c.MultiAuthenticator.authenticators = [
         "oauth_callback_url": "https://jupyterhub.example.com/hub/gitlab/oauth_callback",
         "gitlab_url": "https://gitlab.example.com"
     }),
-    (PAMAuthenticator, "/pam", {"service_name": "PAM"}),
+    (MyPamAutenticator, "/pam", {}),
 ]
 
 c.JupyterHub.authenticator_class = 'multiauthenticator.multiauthenticator.MultiAuthenticator'
