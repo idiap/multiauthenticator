@@ -31,7 +31,7 @@ class CustomPAMAuthenticator(PAMAuthenticator):
 def test_different_authenticators():
     MultiAuthenticator.authenticators = [
         (
-            GitLabOAuthenticator,
+            "gitlab",
             "/gitlab",
             {
                 "client_id": "xxxx",
@@ -40,7 +40,7 @@ def test_different_authenticators():
             },
         ),
         (
-            GitHubOAuthenticator,
+            "oauthenticator.github.GitHubOAuthenticator",
             "/github",
             {
                 "client_id": "xxxx",
