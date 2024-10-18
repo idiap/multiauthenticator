@@ -26,10 +26,10 @@ The same Authenticator class can be used several to support different providers.
 
 """
 try:
-    from importlib.metadata import entry_points
-except ImportError:
     # Python < 3.10
     from importlib_metadata import entry_points
+except ImportError:
+    from importlib.metadata import entry_points
 
 from jupyterhub.auth import Authenticator
 from jupyterhub.utils import url_path_join
