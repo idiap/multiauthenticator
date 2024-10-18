@@ -24,12 +24,16 @@ classifiers = [
 ]
 dependencies = [
     "jupyterhub",
-    "oauthenticator"
+    "oauthenticator",
+    "importlib_metadata>=4.6; python_version < '3.10'",
 ]
 
 [project.optional-dependencies]
 test = ["pytest", "pytest-cov", "pytest-asyncio"]
 dev = ["pre-commit", "jupyterhub-multiauthenticator[test]"]
+
+[project.entry-points."jupyterhub.authenticators"]
+multiauthenticator = "multiauthenticator:MultiAuthenticator"
 
 [tool.setuptools]
 packages = ["multiauthenticator"]

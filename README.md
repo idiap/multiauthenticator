@@ -29,26 +29,23 @@ This property shall contain a list of tuple with the following content:
 As an example:
 
 ```python
-from oauthenticator.github import GitHubOAuthenticator
-from oauthenticator.google import GoogleOAuthenticator
-from oauthenticator.gitlab import GitLabOAuthenticator
 from jupyterhub.auth import PAMAuthenticator
 
 class MyPamAutenticator(PAMAuthenticator):
     login_service = "PAM"
 
 c.MultiAuthenticator.authenticators = [
-    (GitHubOAuthenticator, '/github', {
+    ('github', '/github', {
         'client_id': 'XXXX',
         'client_secret': 'YYYY',
         'oauth_callback_url': 'https://jupyterhub.example.com/hub/github/oauth_callback'
     }),
-    (GoogleOAuthenticator, '/google', {
+    ('google', '/google', {
         'client_id': 'xxxx',
         'client_secret': 'yyyy',
         'oauth_callback_url': 'https://jupyterhub.example.com/hub/google/oauth_callback'
     }),
-    (GitLabOAuthenticator, '/gitlab', {
+    ('gitlab', '/gitlab', {
         "client_id": "ZZZZ",
         "client_secret": "AAAAA",
         "oauth_callback_url": "https://jupyterhub.example.com/hub/gitlab/oauth_callback",
@@ -57,5 +54,5 @@ c.MultiAuthenticator.authenticators = [
     (MyPamAutenticator, "/pam", {}),
 ]
 
-c.JupyterHub.authenticator_class = 'multiauthenticator.multiauthenticator.MultiAuthenticator'
+c.JupyterHub.authenticator_class = 'multiauthenticator'
 ```

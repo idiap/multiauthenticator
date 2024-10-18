@@ -6,34 +6,52 @@ Custom Authenticator to use multiple OAuth providers with JupyterHub
 
 Example of configuration:
 
-    from oauthenticator.github import GitHubOAuthenticator
-    from oauthenticator.google import GoogleOAuthenticator
-
     c.MultiAuthenticator.authenticators = [
-        (GitHubOAuthenticator, '/github', {
+        ("github", '/github', {
             'client_id': 'xxxx',
             'client_secret': 'xxxx',
             'oauth_callback_url': 'http://example.com/hub/github/oauth_callback'
         }),
-        (GoogleOAuthenticator, '/google', {
+        ("google", '/google', {
             'client_id': 'xxxx',
             'client_secret': 'xxxx',
             'oauth_callback_url': 'http://example.com/hub/google/oauth_callback'
         }),
-        (PAMAuthenticator, "/pam", {"service_name": "PAM"}),
+        ("pam", "/pam", {"service_name": "PAM"}),
     ]
 
-    c.JupyterHub.authenticator_class = 'oauthenticator.MultiAuthenticator.MultiAuthenticator'
+    c.JupyterHub.authenticator_class = 'multiauthenticator'
 
 The same Authenticator class can be used several to support different providers.
 
 """
+try:
+    # Python < 3.10
+    from importlib_metadata import entry_points
+except ImportError:
+    from importlib.metadata import entry_points
+
 from jupyterhub.auth import Authenticator
 from jupyterhub.utils import url_path_join
 from traitlets import List
 from traitlets import Unicode
+from traitlets import import_item
 
 PREFIX_SEPARATOR = ":"
+
+
+def _load_authenticator(authenticator_name):
+    """Load an authenticator from a string
+
+    Looks up authenticators entrypoint registration (e.g. 'github')
+    or full import name ('jupyterhub.auth.PAMAuthenticator').
+
+    Returns the Authenticator subclass.
+    """
+    for entry_point in entry_points(group="jupyterhub.authenticators"):
+        if authenticator_name.lower() == entry_point.name.lower():
+            return entry_point.load()
+    return import_item(authenticator_name)
 
 
 class URLScopeMixin:
@@ -82,6 +100,8 @@ class MultiAuthenticator(Authenticator):
             url_scope_authenticator,
             authenticator_configuration,
         ) in self.authenticators:
+            if isinstance(authenticator_klass, str):
+                authenticator_klass = _load_authenticator(authenticator_klass)
 
             class WrapperAuthenticator(URLScopeMixin, authenticator_klass):
                 url_scope = url_scope_authenticator
