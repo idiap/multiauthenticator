@@ -3,4 +3,4 @@
 # SPDX-License-Identifier: BSD-3-Clause
 
 assert_used:
-  skips: ['multiauthenticator/tests/test_*.py']
+  skips: ['*_test.py', '*test_*.py']
