@@ -16,26 +16,26 @@ def test_service_name():
     gitlab_service_name = "gitlab-service"
     google_service_name = "google-service"
     authenticators = [
-        (
-            GitLabOAuthenticator,
-            "/gitlab",
-            {
+        {
+            "authenticator_class": GitLabOAuthenticator,
+            "url_prefix": "/gitlab",
+            "config": {
                 "service_name": gitlab_service_name,
                 "client_id": "xxxx",
                 "client_secret": "xxxx",
                 "oauth_callback_url": "http://example.com/hub/gitlab/oauth_callback",
             },
-        ),
-        (
-            GoogleOAuthenticator,
-            "/google",
-            {
+        },
+        {
+            "authenticator_class": GoogleOAuthenticator,
+            "url_prefix": "/google",
+            "config": {
                 "service_name": google_service_name,
                 "client_id": "xxxx",
                 "client_secret": "xxxx",
                 "oauth_callback_url": "http://example.com/hub/othergoogle/oauth_callback",
             },
-        ),
+        },
     ]
     MultiAuthenticator.authenticators = authenticators
 
@@ -49,26 +49,26 @@ def test_service_name():
 
 def test_same_authenticators():
     MultiAuthenticator.authenticators = [
-        (
-            GoogleOAuthenticator,
-            "/mygoogle",
-            {
+        {
+            "authenticator_class": GoogleOAuthenticator,
+            "url_prefix": "/mygoogle",
+            "config": {
                 "service_name": "My Google",
                 "client_id": "yyyyy",
                 "client_secret": "yyyyy",
                 "oauth_callback_url": "http://example.com/hub/mygoogle/oauth_callback",
             },
-        ),
-        (
-            GoogleOAuthenticator,
-            "/othergoogle",
-            {
+        },
+        {
+            "authenticator_class": GoogleOAuthenticator,
+            "url_prefix": "/othergoogle",
+            "config": {
                 "service_name": "Other Google",
                 "client_id": "xxxx",
                 "client_secret": "xxxx",
                 "oauth_callback_url": "http://example.com/hub/othergoogle/oauth_callback",
             },
-        ),
+        },
     ]
 
     multi_authenticator = MultiAuthenticator()
@@ -89,11 +89,11 @@ def test_same_authenticators():
 
 def test_username_prefix_validation_with_service_name(invalid_name, caplog):
     MultiAuthenticator.authenticators = [
-        (
-            PAMAuthenticator,
-            "/pam",
-            {"service_name": invalid_name, "allowed_users": {"test"}},
-        ),
+        {
+            "authenticator_class": PAMAuthenticator,
+            "url_prefix": "/pam",
+            "config": {"service_name": invalid_name, "allowed_users": {"test"}},
+        },
     ]
 
     with pytest.raises(ValueError) as excinfo:
@@ -105,3 +105,18 @@ def test_username_prefix_validation_with_service_name(invalid_name, caplog):
         caplog.records[0].message
         == "service_name is deprecated, please create a subclass and set the login_service class variable"
     )
+
+
+def test_tuple_config():
+    MultiAuthenticator.authenticators = [
+        (
+            PAMAuthenticator,
+            "/pam",
+            {"service_name": "pam", "allowed_users": {"test"}},
+        ),
+    ]
+    with pytest.deprecated_call():
+        authenticator = MultiAuthenticator()
+    sub_authenticator = authenticator._authenticators[0]
+    assert sub_authenticator.service_name == "pam"
+    assert sub_authenticator.allowed_users == {"test"}

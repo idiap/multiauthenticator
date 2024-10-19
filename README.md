@@ -35,23 +35,38 @@ class MyPamAutenticator(PAMAuthenticator):
     login_service = "PAM"
 
 c.MultiAuthenticator.authenticators = [
-    ('github', '/github', {
-        'client_id': 'XXXX',
-        'client_secret': 'YYYY',
-        'oauth_callback_url': 'https://jupyterhub.example.com/hub/github/oauth_callback'
-    }),
-    ('google', '/google', {
-        'client_id': 'xxxx',
-        'client_secret': 'yyyy',
-        'oauth_callback_url': 'https://jupyterhub.example.com/hub/google/oauth_callback'
-    }),
-    ('gitlab', '/gitlab', {
-        "client_id": "ZZZZ",
-        "client_secret": "AAAAA",
-        "oauth_callback_url": "https://jupyterhub.example.com/hub/gitlab/oauth_callback",
-        "gitlab_url": "https://gitlab.example.com"
-    }),
-    (MyPamAutenticator, "/pam", {}),
+    {
+        "authenticator_class": 'github',
+        "url_prefix": '/github',
+        "config": {
+            'client_id': 'XXXX',
+            'client_secret': 'YYYY',
+            'oauth_callback_url': 'https://jupyterhub.example.com/hub/github/oauth_callback'
+        }
+    },
+    {
+        "authenticator_class": 'google',
+        "url_prefix": '/google',
+        "config": {
+            'client_id': 'xxxx',
+            'client_secret': 'yyyy',
+            'oauth_callback_url': 'https://jupyterhub.example.com/hub/google/oauth_callback'
+        }
+    },
+    {
+        "authenticator_class": 'gitlab',
+        "url_prefix": '/gitlab',
+        "config": {
+            'client_id': 'ZZZZ',
+            'client_secret': 'AAAA',
+            'oauth_callback_url': 'https://jupyterhub.example.com/hub/gitlab/oauth_callback'
+            "gitlab_url": "https://gitlab.example.com"
+        }
+    },
+    {
+        "authenticator_class": MyPamAuthenticator,
+        "url_prefix": "/pam",
+    },
 ]
 
 c.JupyterHub.authenticator_class = 'multiauthenticator'

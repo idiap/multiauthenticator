@@ -7,17 +7,28 @@ Custom Authenticator to use multiple OAuth providers with JupyterHub
 Example of configuration:
 
     c.MultiAuthenticator.authenticators = [
-        ("github", '/github', {
-            'client_id': 'xxxx',
-            'client_secret': 'xxxx',
-            'oauth_callback_url': 'http://example.com/hub/github/oauth_callback'
-        }),
-        ("google", '/google', {
-            'client_id': 'xxxx',
-            'client_secret': 'xxxx',
-            'oauth_callback_url': 'http://example.com/hub/google/oauth_callback'
-        }),
-        ("pam", "/pam", {"service_name": "PAM"}),
+        {
+            "authenticator_class": 'github',
+            "url_prefix": '/github',
+            "config": {
+                'client_id': 'XXXX',
+                'client_secret': 'YYYY',
+                'oauth_callback_url': 'https://jupyterhub.example.com/hub/github/oauth_callback'
+            }
+        },
+        {
+            "authenticator_class": 'google',
+            "url_prefix": '/google',
+            "config": {
+                'client_id': 'xxxx',
+                'client_secret': 'yyyy',
+                'oauth_callback_url': 'https://jupyterhub.example.com/hub/google/oauth_callback'
+            }
+        },
+        {
+            "authenticator_class": "pam",
+            "url_prefix": "/pam",
+        },
     ]
 
     c.JupyterHub.authenticator_class = 'multiauthenticator'
@@ -30,6 +41,7 @@ try:
     from importlib_metadata import entry_points
 except ImportError:
     from importlib.metadata import entry_points
+import warnings
 
 from jupyterhub.auth import Authenticator
 from jupyterhub.utils import url_path_join
@@ -95,11 +107,24 @@ class MultiAuthenticator(Authenticator):
     def __init__(self, *arg, **kwargs):
         super().__init__(*arg, **kwargs)
         self._authenticators = []
-        for (
-            authenticator_klass,
-            url_scope_authenticator,
-            authenticator_configuration,
-        ) in self.authenticators:
+        for entry in self.authenticators:
+            if isinstance(entry, (list, tuple)):
+                tuple_entry = entry
+                entry = {
+                    "authenticator_class": tuple_entry[0],
+                    "url_prefix": tuple_entry[1],
+                    "config": tuple_entry[2],
+                }
+                warnings.warn(
+                    "Configuring subauthenticators with tuples is deprecated."
+                    f" Use a dict like: {entry!r}",
+                    DeprecationWarning,
+                )
+
+            authenticator_klass = entry["authenticator_class"]
+            url_scope_authenticator = entry["url_prefix"]
+            authenticator_configuration = entry.get("config", {})
+
             if isinstance(authenticator_klass, str):
                 authenticator_klass = _load_authenticator(authenticator_klass)
 
