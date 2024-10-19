@@ -30,25 +30,25 @@ class CustomPAMAuthenticator(PAMAuthenticator):
 
 def test_different_authenticators():
     MultiAuthenticator.authenticators = [
-        (
-            "gitlab",
-            "/gitlab",
-            {
+        {
+            "authenticator_class": "gitlab",
+            "url_prefix": "/gitlab",
+            "config": {
                 "client_id": "xxxx",
                 "client_secret": "xxxx",
                 "oauth_callback_url": "http://example.com/hub/gitlab/oauth_callback",
             },
-        ),
-        (
-            "oauthenticator.github.GitHubOAuthenticator",
-            "/github",
-            {
+        },
+        {
+            "authenticator_class": "oauthenticator.github.GitHubOAuthenticator",
+            "url_prefix": "/github",
+            "config": {
                 "client_id": "xxxx",
                 "client_secret": "xxxx",
                 "oauth_callback_url": "http://example.com/hub/github/oauth_callback",
             },
-        ),
-        (CustomPAMAuthenticator, "/pam", {}),
+        },
+        {"authenticator_class": CustomPAMAuthenticator, "url_prefix": "/pam"},
     ]
 
     multi_authenticator = MultiAuthenticator()
@@ -98,23 +98,23 @@ def test_extra_configuration():
     allowed_users = {"test_user1", "test_user2"}
 
     authenticators = [
-        (
-            GitLabOAuthenticator,
-            "/gitlab",
-            {
+        {
+            "authenticator_class": GitLabOAuthenticator,
+            "url_prefix": "/gitlab",
+            "config": {
                 "client_id": "xxxx",
                 "client_secret": "xxxx",
                 "oauth_callback_url": "http://example.com/hub/gitlab/oauth_callback",
                 "allowed_users": allowed_users,
             },
-        ),
-        (
-            CustomDummyAuthenticator,
-            "/pam",
-            {
+        },
+        {
+            "authenticator_class": CustomDummyAuthenticator,
+            "url_prefix": "/pam",
+            "config": {
                 "allowed_users": allowed_users,
             },
-        ),
+        },
     ]
     MultiAuthenticator.authenticators = authenticators
 
@@ -126,17 +126,17 @@ def test_extra_configuration():
 
 def test_username_prefix():
     MultiAuthenticator.authenticators = [
-        (
-            GitLabOAuthenticator,
-            "/gitlab",
-            {
+        {
+            "authenticator_class": GitLabOAuthenticator,
+            "url_prefix": "/gitlab",
+            "config": {
                 "client_id": "xxxx",
                 "client_secret": "xxxx",
                 "oauth_callback_url": "http://example.com/hub/gitlab/oauth_callback",
             },
-        ),
-        (CustomPAMAuthenticator, "/pam", {}),
-        (CustomDummyAuthenticator, "/dummy", {}),
+        },
+        {"authenticator_class": CustomPAMAuthenticator, "url_prefix": "/pam"},
+        {"authenticator_class": CustomDummyAuthenticator, "url_prefix": "/dummy"},
     ]
 
     multi_authenticator = MultiAuthenticator()
@@ -158,7 +158,7 @@ def test_username_prefix():
 @pytest.mark.asyncio
 async def test_authenticated_username_prefix():
     MultiAuthenticator.authenticators = [
-        (CustomDummyAuthenticator, "/dummy", {}),
+        {"authenticator_class": CustomDummyAuthenticator, "url_prefix": "/dummy"},
     ]
 
     multi_authenticator = MultiAuthenticator()
@@ -177,25 +177,29 @@ def test_username_prefix_checks():
         login_service = "Dummy2"
 
     MultiAuthenticator.authenticators = [
-        (CustomPAMAuthenticator, "/pam", {"allowed_users": {"test"}}),
-        (
-            CustomPAMAuthenticator2,
-            "/pam2",
-            {"blocked_users": {"test2"}},
-        ),
-        (
-            CustomDummyAuthenticator,
-            "/dummy",
-            {"allowed_users": {"TEST3"}},
-        ),
-        (
-            CustomDummyAuthenticator2,
-            "/dummy2",
-            {
+        {
+            "authenticator_class": CustomPAMAuthenticator,
+            "url_prefix": "/pam",
+            "config": {"allowed_users": {"test"}},
+        },
+        {
+            "authenticator_class": CustomPAMAuthenticator2,
+            "url_prefix": "/pam2",
+            "config": {"blocked_users": {"test2"}},
+        },
+        {
+            "authenticator_class": CustomDummyAuthenticator,
+            "url_prefix": "/dummy",
+            "config": {"allowed_users": {"TEST3"}},
+        },
+        {
+            "authenticator_class": CustomDummyAuthenticator2,
+            "url_prefix": "/dummy2",
+            "config": {
                 "allowed_users": {"TEST3"},
                 "blocked_users": {"TEST4"},
             },
-        ),
+        },
     ]
 
     multi_authenticator = MultiAuthenticator()
@@ -253,15 +257,15 @@ def test_username_prefix_validation_with_login_service(invalid_name):
         login_service = invalid_name
 
     MultiAuthenticator.authenticators = [
-        (
-            MyAuthenticator,
-            "/myauth",
-            {
+        {
+            "authenticator_class": MyAuthenticator,
+            "url_prefix": "/myauth",
+            "config": {
                 "client_id": "xxxx",
                 "client_secret": "xxxx",
                 "oauth_callback_url": "http://example.com/myauth/oauth_callback",
             },
-        ),
+        },
     ]
 
     with pytest.raises(ValueError) as excinfo:
@@ -272,11 +276,11 @@ def test_username_prefix_validation_with_login_service(invalid_name):
 
 def test_next_handling():
     MultiAuthenticator.authenticators = [
-        (
-            CustomDummyAuthenticator,
-            "/dummy",
-            {"allowed_users": {"test"}},
-        ),
+        {
+            "authenticator_class": CustomDummyAuthenticator,
+            "url_prefix": "/dummy",
+            "config": {"allowed_users": {"test"}},
+        },
     ]
 
     multi_authenticator = MultiAuthenticator()
@@ -301,7 +305,10 @@ def test_next_handling():
 async def test_prefix(prefix, expected):
     MultiAuthenticator.username_prefix = prefix
     MultiAuthenticator.authenticators = [
-        (CustomDummyAuthenticator, "/dummy", {}),
+        {
+            "authenticator_class": CustomDummyAuthenticator,
+            "url_prefix": "/dummy",
+        },
     ]
 
     multi_authenticator = MultiAuthenticator()
