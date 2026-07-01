@@ -51,7 +51,7 @@ jobs:
             jupyterhub-version: "3"
 
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
       - uses: actions/setup-python@v6
         with:
           python-version: "${{ matrix.python-version }}"
@@ -70,7 +70,7 @@ jobs:
           pytest --cov=multiauthenticator
 
       # GitHub action reference: https://github.com/codecov/codecov-action
-      - uses: codecov/codecov-action@v6
+      - uses: codecov/codecov-action@v7
 
   build:
     name: Build distribution 📦
@@ -81,7 +81,7 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
       - name: Set up Python
         uses: actions/setup-python@v6
         with:
