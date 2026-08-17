@@ -36,6 +36,7 @@ Example of configuration:
 The same Authenticator class can be used several to support different providers.
 
 """
+
 try:
     # Python < 3.10
     from importlib_metadata import entry_points
@@ -200,15 +201,13 @@ class MultiAuthenticator(Authenticator):
 
             url = authenticator.login_url(base_url)
 
-            html.append(
-                f"""
+            html.append(f"""
                 <div class="service-login">
                   <a role="button" class='btn btn-jupyter btn-lg' href='{url}{{% if next is defined and next|length %}}?next={{{{next}}}}{{% endif %}}'>
                     Sign in with {login_service}
                   </a>
                 </div>
-                """
-            )
+                """)
         return "\n".join(html)
 
     def get_handlers(self, app):

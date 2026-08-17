@@ -2,6 +2,7 @@
 #
 # SPDX-License-Identifier: BSD-3-Clause
 """Test module for the deprecated features of the MultiAuthenticator class"""
+
 import pytest
 
 from jupyterhub.auth import PAMAuthenticator
@@ -22,7 +23,7 @@ def test_service_name():
             "config": {
                 "service_name": gitlab_service_name,
                 "client_id": "xxxx",
-                "client_secret": "xxxx",
+                "client_secret": "xxxx",  # nosec B105
                 "oauth_callback_url": "http://example.com/hub/gitlab/oauth_callback",
             },
         },
@@ -32,7 +33,7 @@ def test_service_name():
             "config": {
                 "service_name": google_service_name,
                 "client_id": "xxxx",
-                "client_secret": "xxxx",
+                "client_secret": "xxxx",  # nosec B105
                 "oauth_callback_url": "http://example.com/hub/othergoogle/oauth_callback",
             },
         },
@@ -55,7 +56,7 @@ def test_same_authenticators():
             "config": {
                 "service_name": "My Google",
                 "client_id": "yyyyy",
-                "client_secret": "yyyyy",
+                "client_secret": "yyyyy",  # nosec B105
                 "oauth_callback_url": "http://example.com/hub/mygoogle/oauth_callback",
             },
         },
@@ -65,7 +66,7 @@ def test_same_authenticators():
             "config": {
                 "service_name": "Other Google",
                 "client_id": "xxxx",
-                "client_secret": "xxxx",
+                "client_secret": "xxxx",  # nosec B105
                 "oauth_callback_url": "http://example.com/hub/othergoogle/oauth_callback",
             },
         },

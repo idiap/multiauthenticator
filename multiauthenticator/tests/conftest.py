@@ -2,6 +2,7 @@
 #
 # SPDX-License-Identifier: BSD-3-Clause
 """Test Configuration"""
+
 import pytest
 
 from ..multiauthenticator import PREFIX_SEPARATOR

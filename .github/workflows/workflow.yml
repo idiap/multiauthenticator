@@ -24,6 +24,8 @@ on:
     tags: ["[0-9]+.[0-9]+.[0-9]+"]
   workflow_dispatch:
 
+permissions: {}
+
 jobs:
   test:
     runs-on: ubuntu-22.04
@@ -51,8 +53,10 @@ jobs:
             jupyterhub-version: "3"
 
     steps:
-      - uses: actions/checkout@v7
-      - uses: actions/setup-python@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7
         with:
           python-version: "${{ matrix.python-version }}"
 
@@ -70,7 +74,7 @@ jobs:
           pytest --cov=multiauthenticator
 
       # GitHub action reference: https://github.com/codecov/codecov-action
-      - uses: codecov/codecov-action@v7
+      - uses: codecov/codecov-action@fb8b3582c8e4def4969c97caa2f19720cb33a72f # v7
 
   build:
     name: Build distribution 📦
@@ -81,9 +85,11 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
       - name: Set up Python
-        uses: actions/setup-python@v7
+        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7
         with:
           python-version: "3.11"
       - name: Install pypa/build
@@ -95,7 +101,7 @@ jobs:
       - name: Build a binary wheel and a source tarball
         run: python3 -m build
       - name: Store the distribution packages
-        uses: actions/upload-artifact@v7
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
         with:
           name: python-package-distributions
           path: dist/
@@ -120,12 +126,12 @@ jobs:
 
     steps:
       - name: Download all the dists
-        uses: actions/download-artifact@v8
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8
         with:
           name: python-package-distributions
           path: dist/
       - name: Publish distribution 📦 to PyPI
-        uses: pypa/gh-action-pypi-publish@release/v1
+        uses: pypa/gh-action-pypi-publish@dc37677b2e1c63e2034f94d8a5b11f265b73ba33 # release/v1
 
   github-release:
     name: >-
@@ -143,13 +149,13 @@ jobs:
 
     steps:
       - name: Download all the dists
-        uses: actions/download-artifact@v8
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8
         with:
           name: python-package-distributions
           path: dist/
 
       - name: Sign the dists with Sigstore
-        uses: sigstore/gh-action-sigstore-python@v3.5.0
+        uses: sigstore/gh-action-sigstore-python@790bc6befb9d733738f18d8f895854b453640ec9 # v3.5.0
         with:
           inputs: >-
             ./dist/*.tar.gz
@@ -160,7 +166,7 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: >-
           gh release create
-          '${{ github.ref_name }}'
+          '${GITHUB_REF_NAME}'
           --repo '${{ github.repository }}'
           --notes ""
 
@@ -172,5 +178,5 @@ jobs:
         # sigstore-produced signatures and certificates.
         run: >-
           gh release upload
-          '${{ github.ref_name }}' dist/**
+          '${GITHUB_REF_NAME}' dist/**
           --repo '${{ github.repository }}'
