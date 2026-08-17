@@ -74,3 +74,5 @@ jupyterhub_cookie_secret
 .idea/
 
 jupyterhub_config.py
+
+.DS_Store

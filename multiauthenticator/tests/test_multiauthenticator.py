@@ -2,6 +2,7 @@
 #
 # SPDX-License-Identifier: BSD-3-Clause
 """Test module for the MultiAuthenticator class"""
+
 import jupyterhub
 import pytest
 
@@ -35,7 +36,7 @@ def test_different_authenticators():
             "url_prefix": "/gitlab",
             "config": {
                 "client_id": "xxxx",
-                "client_secret": "xxxx",
+                "client_secret": "xxxx",  # nosec B105
                 "oauth_callback_url": "http://example.com/hub/gitlab/oauth_callback",
             },
         },
@@ -44,7 +45,7 @@ def test_different_authenticators():
             "url_prefix": "/github",
             "config": {
                 "client_id": "xxxx",
-                "client_secret": "xxxx",
+                "client_secret": "xxxx",  # nosec B105
                 "oauth_callback_url": "http://example.com/hub/github/oauth_callback",
             },
         },
@@ -103,7 +104,7 @@ def test_extra_configuration():
             "url_prefix": "/gitlab",
             "config": {
                 "client_id": "xxxx",
-                "client_secret": "xxxx",
+                "client_secret": "xxxx",  # nosec B105
                 "oauth_callback_url": "http://example.com/hub/gitlab/oauth_callback",
                 "allowed_users": allowed_users,
             },
@@ -131,7 +132,7 @@ def test_username_prefix():
             "url_prefix": "/gitlab",
             "config": {
                 "client_id": "xxxx",
-                "client_secret": "xxxx",
+                "client_secret": "xxxx",  # nosec B105
                 "oauth_callback_url": "http://example.com/hub/gitlab/oauth_callback",
             },
         },
@@ -262,7 +263,7 @@ def test_username_prefix_validation_with_login_service(invalid_name):
             "url_prefix": "/myauth",
             "config": {
                 "client_id": "xxxx",
-                "client_secret": "xxxx",
+                "client_secret": "xxxx",  # nosec B105
                 "oauth_callback_url": "http://example.com/myauth/oauth_callback",
             },
         },
